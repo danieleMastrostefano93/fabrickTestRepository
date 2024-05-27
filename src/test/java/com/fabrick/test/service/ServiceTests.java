@@ -34,15 +34,20 @@ public class ServiceTests {
     @Autowired
     RestService service;
 
+    @MockBean
+    TransactionRepository repository;
+
     private static Long accountId;
     private static String test;
     private static String testUrl;
+    private static String response;
 
     @BeforeClass
     public static void setUp(){
         accountId = 1L;
         test = "test";
         testUrl = "https://google.com";
+        response = "{payload: {list: []}}";
     }
 
     @Test
@@ -101,6 +106,16 @@ public class ServiceTests {
         Mockito.when(restUtils.executeRestCall(any(),any(),any(),any(),any())).thenThrow(JsonProcessingException.class);
         ResponseJsonProcessingException exception = Assert.assertThrows(ResponseJsonProcessingException.class, () -> service.makeBonifico(accountId, new BonificoDto()));
         Assert.assertEquals(exception.getStatusCode(), HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @Test
+    public void getAccountTransactionsTest() throws JsonProcessingException {
+        Mockito.when(apiConfig.getAuthSchema()).thenReturn(test);
+        Mockito.when(apiConfig.getApiKey()).thenReturn(test);
+        Mockito.when(apiConfig.getTransactionsUrl()).thenReturn(testUrl);
+        Mockito.when(restUtils.executeRestCall(any(),any(),any(),any(),any())).thenReturn(response);
+        Mockito.when(repository.saveAll(anyList())).thenReturn(new ArrayList<>());
+        Assert.assertNotNull(service.getAccountTransactions(accountId, test, test));
     }
 
     @Test
